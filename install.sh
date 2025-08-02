@@ -7,7 +7,24 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Default values
+DEBUG_MODE=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --debug)
+            DEBUG_MODE=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 echo -e "${YELLOW}🚀 Starting Glide Updater installation...${NC}"
+[ "$DEBUG_MODE" = true ] && echo -e "${YELLOW}🔧 Debug mode enabled${NC}"
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
@@ -37,7 +54,7 @@ chmod +x install.sh
 echo -e "${GREEN}🚀 Installing systemd service...${NC}"
 SERVICE_FILE="/etc/systemd/system/glide-updater.service"
 
-# Create the service file
+# Create the service file with debug option if enabled
 cat > $SERVICE_FILE <<EOL
 [Unit]
 Description=Glide Updater Service
@@ -47,9 +64,13 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$(pwd)
-ExecStart=$(pwd)/glide-updater.sh
-# Uncomment the line below to enable debug logging
-#ExecStart=$(pwd)/glide-updater.sh --debug
+$(if [ "$DEBUG_MODE" = true ]; then
+    echo "ExecStart=$(pwd)/glide-updater.sh --debug"
+else
+    echo "ExecStart=$(pwd)/glide-updater.sh"
+    echo "# Uncomment the line below to enable debug logging"
+    echo "#ExecStart=$(pwd)/glide-updater.sh --debug"
+fi)
 Restart=always
 RestartSec=10
 
