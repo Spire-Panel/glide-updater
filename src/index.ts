@@ -168,12 +168,22 @@ async function checkForUpdates() {
       });
 
       if (config.update.autoInstall) {
-        // Install dependencies
-        logInfo("Installing dependencies...");
-        execSync("npm install", {
-          stdio: logging.level === "silent" ? "ignore" : "inherit",
-          cwd: paths.base,
-        });
+        // Install dependencies using bun
+        logInfo("Installing dependencies with bun...");
+        try {
+          execSync("bun install", {
+            stdio: logging.level === "silent" ? "ignore" : "inherit",
+            cwd: paths.base,
+            env: { ...process.env, PATH: process.env.PATH },
+          });
+        } catch (error) {
+          logError(
+            `Failed to install dependencies: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+          throw error; // Re-throw to be caught by the outer try-catch
+        }
       }
 
       // Update the commit hash

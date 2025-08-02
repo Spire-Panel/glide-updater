@@ -34,10 +34,10 @@ touch "$LOCKFILE"
 # Main loop
 while true; do
     [ "$LOG_LEVEL" = "info" ] && echo "[$(date)] Checking for updates..."
-    
+    source ~/.bashrc
     BUN_PATH=$(which bun)
     # Run the updater with the appropriate log level
-    LOG_LEVEL="$LOG_LEVEL" "$BUN_PATH" "$SCRIPT_DIR/src/index.ts"
+    exec env LOG_LEVEL="$LOG_LEVEL" "$BUN_PATH" "$SCRIPT_DIR/src/index.ts"
     
     [ "$LOG_LEVEL" = "info" ] && echo "[$(date)] Update check completed. Next check in 30 seconds..."
     sleep 30
