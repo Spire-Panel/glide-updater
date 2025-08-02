@@ -1,0 +1,16 @@
+[Unit]
+Description=Glide Updater Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/ethan/Projects/glide-updater
+ExecStart=/bin/bash /home/ethan/Projects/glide-updater/glide-updater.sh
+# Uncomment the line below to enable debug logging
+#ExecStart=/bin/bash /home/ethan/Projects/glide-updater/glide-updater.sh --debug
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

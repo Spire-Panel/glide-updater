@@ -1,0 +1,115 @@
+#!/bin/bash
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}🚀 Starting Glide Updater installation...${NC}"
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then 
+    echo -e "${YELLOW}⚠️  Please run as root or with sudo${NC}"
+    exit 1
+fi
+
+# Check for Bun
+if ! command -v bun &> /dev/null; then
+    echo -e "${YELLOW}⚠️  Bun is not installed. Installing Bun...${NC}"
+    curl -fsSL https://bun.sh/install | bash
+    export PATH="$HOME/.bun/bin:$PATH"
+    echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+fi
+
+# Install dependencies
+echo -e "${GREEN}📦 Installing dependencies...${NC}"
+bun install
+
+# Make scripts executable
+echo -e "${GREEN}🔧 Setting up scripts...${NC}"
+chmod +x glide-updater.sh
+chmod +x install.sh
+
+# Install systemd service
+echo -e "${GREEN}🚀 Installing systemd service...${NC}"
+SERVICE_FILE="/etc/systemd/system/glide-updater.service"
+
+# Create the service file
+cat > $SERVICE_FILE <<EOL
+[Unit]
+Description=Glide Updater Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$(pwd)
+ExecStart=$(pwd)/glide-updater.sh
+# Uncomment the line below to enable debug logging
+#ExecStart=$(pwd)/glide-updater.sh --debug
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Reload systemd and enable service
+echo -e "${GREEN}🔄 Reloading systemd daemon...${NC}"
+systemctl daemon-reload
+systemctl enable glide-updater.service
+
+# Create default config if it doesn't exist
+if [ ! -f "$HOME/.glide-updater-config.json" ]; then
+    echo -e "${GREEN}📝 Creating default configuration...${NC}"
+    cat > "$HOME/.glide-updater-config.json" <<EOL
+{
+  "github": {
+    "owner": "spire-panel",
+    "repo": "glide",
+    "branch": "main"
+  },
+  "paths": {
+    "base": "$HOME/glide",
+    "config": "$HOME/.glide-updater-config.json"
+  },
+  "logging": {
+    "level": "info"
+  },
+  "service": {
+    "name": "glide-updater.service",
+    "autoRestart": true
+  },
+  "update": {
+    "checkInterval": 30,
+    "autoInstall": true
+  }
+}
+EOL
+fi
+
+# Create the target directory if it doesn't exist
+if [ ! -d "$HOME/glide" ]; then
+    echo -e "${GREEN}📂 Creating Glide directory...${NC}"
+    mkdir -p "$HOME/glide"
+    chown -R $SUDO_USER:$SUDO_USER "$HOME/glide"
+fi
+
+# Set proper permissions
+echo -e "${GREEN}🔒 Setting permissions...${NC}"
+chown -R $SUDO_USER:$SUDO_USER .
+chmod 600 "$HOME/.glide-updater-config.json"
+
+# Start the service
+echo -e "${GREEN}🚀 Starting Glide Updater service...${NC}"
+systemctl restart glide-updater.service
+
+echo -e "${GREEN}✅ Installation complete!${NC}"
+echo -e "${YELLOW}📝 Configuration file: $HOME/.glide-updater-config.json${NC}"
+echo -e "${YELLOW}📋 Service status: systemctl status glide-updater${NC}"
+echo -e "${YELLOW}📜 View logs: journalctl -u glide-updater -f${NC}"
+
+exit 0
