@@ -81,7 +81,7 @@ EOL
 # Reload systemd and enable service
 echo -e "${GREEN}🔄 Reloading systemd daemon...${NC}"
 systemctl daemon-reload
-systemctl enable glide-updater.service
+systemctl enable --now glide-updater.service
 
 # Create default config if it doesn't exist
 if [ ! -f "$HOME/.glide-updater-config.json" ]; then
