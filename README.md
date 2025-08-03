@@ -19,16 +19,9 @@ A robust auto-updater for Git repositories with systemd service integration.
 
 ## Installation
 
-1. Clone the repository:
-
+1. Run the installation script as root:
    ```bash
-   git clone https://github.com/yourusername/glide-updater.git
-   cd glide-updater
-   ```
-
-2. Run the installation script as root:
-   ```bash
-   sudo ./install.sh
+   curl -fsSL https://raw.githubusercontent.com/spire-panel/glide-updater/main/install.sh | sudo bash
    ```
 
 The installer will:

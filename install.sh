@@ -32,6 +32,16 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+if [ ! -f "glide-updater.sh" ]; then
+    git clone https://github.com/spire-panel/glide-updater.git ./glide-updater
+fi
+
+while [ ! -d "./glide-updater" ]; do
+    sleep 1
+done
+
+cd ./glide-updater
+
 # Check for Bun
 if ! command -v bun &> /dev/null; then
     echo -e "${YELLOW}⚠️  Bun is not installed. Installing Bun...${NC}"
